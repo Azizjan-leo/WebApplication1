@@ -11,17 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddEntityFrameworkNpgsql().AddDbContext<ApplicationContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    //options.RequireHttpsMetadata = false;
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
+        ValidateIssuer = false,
         ValidIssuer = AuthOptions.ISSUER,
-        ValidateAudience = true,
+        ValidateAudience = false,
         ValidAudience = AuthOptions.AUDIENCE,
-        ValidateLifetime = true,
+        ValidateLifetime = false,
         IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
         ValidateIssuerSigningKey = true,
     };
@@ -29,13 +35,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         OnMessageReceived = context =>
         {
-            var accessToken = context.Request.Query["access_token"];
-                       
             var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(accessToken) &&
-            (path.StartsWithSegments("/chat")))
+            if (path.StartsWithSegments("/chat"))
             {
-                context.Token = accessToken;
+                context.Request.Headers.TryGetValue("Authorization", out var vals);
+
+                var accessToken = vals.FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                }
             }
             return Task.CompletedTask;
         }

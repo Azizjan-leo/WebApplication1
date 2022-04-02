@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 
-Console.Write("email: ");
-var email = Console.ReadLine();
-Console.Write("token: ");
+Console.Write("email: admin@mail.com");
+var email = "admin@mail.com";
+Console.Write("\ntoken: ");
 var _myAccessToken = Console.ReadLine();
 
 Task<string> GetToken()
